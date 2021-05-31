@@ -16,7 +16,7 @@ class Endpoint():
                 "app": app,
                 "token": token
             }
-            r = requests.post(endpoint, json.dumps(data))
+            r = requests.post(endpoint+"/validate", json.dumps(data))
             content = json.loads(r.text)
             if r.status_code == 200 and content["valid"] == True:
                 print(Fore.GREEN + "Successfully connected to '{0}'".format(endpoint) + Style.RESET_ALL)
