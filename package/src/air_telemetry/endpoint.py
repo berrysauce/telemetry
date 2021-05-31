@@ -1,5 +1,6 @@
 import requests
 from colorama import Fore, Back, Style
+import json
 
 class Endpoint():
     endpoint = None
@@ -15,10 +16,11 @@ class Endpoint():
                 "app": app,
                 "token": token
             }
-            r = requests.get(endpoint, data)
-            if r.status_code == 200 and r.json["valid"] == True:
+            r = requests.post(endpoint, json.dumps(data))
+            content = json.loads(r.text)
+            if r.status_code == 200 and content["valid"] == True:
                 print(Fore.GREEN + "Successfully connected to '{0}'".format(endpoint) + Style.RESET_ALL)
-            elif r.status_code == 401 or r.json["valid"] == False:
+            elif r.status_code == 401 or content["valid"] == False:
                 print(Fore.RED + "Failed to connected to '{0}' - Unauthorized".format(endpoint) + Style.RESET_ALL)
             else:
                 print(Fore.RED + "Failed to connected to '{0}' - Got status code {1}".format(endpoint, r.status_code) + Style.RESET_ALL)
