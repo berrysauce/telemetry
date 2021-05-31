@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI, Path, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional, final
+from typing import Optional
 from deta import Deta
 from dotenv import load_dotenv
 import os
