@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime
 import uuid
-import json
 
 
 load_dotenv()
@@ -29,8 +28,9 @@ class LogAction(BaseModel):
     timestamp: str
     token: str
     app: str
+    notify: bool
 
-class GetLogs(BaseModel):
+class Authorize(BaseModel):
     app: str
     token: str
     
@@ -51,7 +51,19 @@ def post_session(item: CreateToken):
             "app": item.app,
             "description": item.description,
             "token": token}
+    
+    
+@app.post("/validate")
+def post_validate(auth: Authorize):
+    try:
+        session = next(tokendb.fetch({"token": auth.token}))[0]
+    except:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
+    if auth.app != session["app"]:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    else:
+        return {"valid": True}
 
 @app.post("/log")
 def post_log(log: LogAction):
@@ -70,12 +82,16 @@ def post_log(log: LogAction):
             "description": log.description,
             "timestamp": log.timestamp,
             "latency": latency})
+    
+    if log.notify is True:
+        print("NOTIFY HERE")
+    
     return {"msg": "Action logged!",
             "latency": latency}
         
         
 @app.post("/logs")
-def post_logs(auth: GetLogs, format: bool = False):
+def post_logs(auth: Authorize, format: bool = False):
     try:
         session = next(tokendb.fetch({"token": auth.token}))[0]
     except:
@@ -89,7 +105,6 @@ def post_logs(auth: GetLogs, format: bool = False):
         return logs
     else:
         return {"msg": "Work-in-progress"}
-            
                 
 
 if __name__ == "__main__":
