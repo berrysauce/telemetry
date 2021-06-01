@@ -9,7 +9,6 @@ class Endpoint():
     def __init__(self, endpoint, app, token):
         self.endpoint = endpoint
         self.token = token
-        print("Connecting to the following Telemetry endpoint:")
         print(Fore.BLUE + "Connecting to Telemetry endpoint..." + Style.RESET_ALL)
         try:
             data = {

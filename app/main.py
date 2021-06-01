@@ -1,3 +1,4 @@
+from requests.api import head
 import uvicorn
 from fastapi import FastAPI, Path, HTTPException
 from pydantic import BaseModel
@@ -7,10 +8,12 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime
 import uuid
+import requests
 
 
 load_dotenv()
 DETA_TOKEN = os.getenv("DETA_TOKEN")
+PUSH_TOKEN = os.getenv("PUSH_TOKEN")
 app = FastAPI()
 deta = Deta(DETA_TOKEN)
 tokendb = deta.Base("telemetry-tokens")
@@ -83,7 +86,15 @@ def post_log(log: LogAction):
             "latency": latency})
     
     if log.notify is True:
-        print("NOTIFY HERE")
+        headers = {"Content-Type": "application/json",
+                   "x-api-key": PUSH_TOKEN}
+        data = {"title": "{0} [{1}]".format(log.level, log.app),
+                "body": log.description}
+        r = requests.post("https://push.techulus.com/api/v1/notify", headers=headers, data=data)
+        
+        return {"msg": "Action logged!",
+                "latency": latency,
+                "notification_status": r.status_code}
     
     return {"msg": "Action logged!",
             "latency": latency}
