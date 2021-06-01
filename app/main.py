@@ -86,8 +86,9 @@ def post_log(log: LogAction):
             "latency": latency})
     
     if log.notify is True: 
-        title = "{0} [{1}]".format(log.level, log.app)
-        r = requests.post("https://push.techulus.com/api/v1/notify/{0}?title={1}&body={2}".format(PUSH_TOKEN, title, log.description))
+        title = "{0} [{1}]".format(log.app, log.level)
+        body = "{0} - Timestamp: {1}".format(log.description, log.timestamp)
+        r = requests.post("https://push.techulus.com/api/v1/notify/{0}?title={1}&body={2}".format(PUSH_TOKEN, title, body))
         
         return {"msg": "Action logged!",
                 "latency": latency,
