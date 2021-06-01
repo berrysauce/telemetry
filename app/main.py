@@ -85,12 +85,9 @@ def post_log(log: LogAction):
             "timestamp": log.timestamp,
             "latency": latency})
     
-    if log.notify is True:
-        headers = {"Content-Type": "application/json",
-                   "x-api-key": PUSH_TOKEN}
-        data = {"title": "{0} [{1}]".format(log.level, log.app),
-                "body": log.description}
-        r = requests.post("https://push.techulus.com/api/v1/notify", headers=headers, data=data)
+    if log.notify is True: 
+        title = "{0} [{1}]".format(log.level, log.app)
+        r = requests.post("https://push.techulus.com/api/v1/notify/{0}?title={1}&body={2}".format(PUSH_TOKEN, title, log.description))
         
         return {"msg": "Action logged!",
                 "latency": latency,
