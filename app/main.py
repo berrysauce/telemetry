@@ -26,7 +26,7 @@ class CreateToken(BaseModel):
     
 class LogAction(BaseModel):
     level: str
-    description: str
+    detail: str
     timestamp: str
     token: str
     app: str
@@ -81,13 +81,13 @@ def post_log(log: LogAction):
     latency = str(localtime - timestamp)
     logdb.put({"app": log.app,
             "level": log.level,
-            "description": log.description,
+            "detail": log.detail,
             "timestamp": log.timestamp,
             "latency": latency})
     
     if log.notify is True: 
         title = "{0} [{1}]".format(log.app, log.level)
-        body = "{0} - Timestamp: {1}".format(log.description, log.timestamp)
+        body = "{0} - Timestamp: {1}".format(log.detail, log.timestamp)
         r = requests.post("https://push.techulus.com/api/v1/notify/{0}?title={1}&body={2}".format(PUSH_TOKEN, title, body))
         
         return {"msg": "Action logged!",
