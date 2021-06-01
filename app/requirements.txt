@@ -3,3 +3,4 @@ deta
 pydantic
 fastapi
 python-dotenv
+requests
