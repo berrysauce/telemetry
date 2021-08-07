@@ -9,6 +9,7 @@ import os
 from datetime import datetime
 import uuid
 import requests
+from operator import itemgetter
 
 
 load_dotenv()
@@ -44,6 +45,8 @@ def send_notification(notify, logapp, level, detail, timestamp):
 
 @app.get("/")
 def get_root():
+    testlist = ["test", "test2"]
+    testlist.sort()
     return {"msg": "Telemetry operated by berrysauce - Code/License at github.com/berrysauce/telemetry"}
 
 @app.post("/token")
@@ -103,7 +106,7 @@ def post_log(log: LogAction, background_tasks: BackgroundTasks):
     }
          
 @app.post("/logs")
-def post_logs(auth: Authorize, format: bool = False):
+def post_logs(auth: Authorize, formatted: bool = False):
     try:
         session = tokendb.fetch({"token": auth.token}).items[0]
     except:
@@ -116,7 +119,8 @@ def post_logs(auth: Authorize, format: bool = False):
     if format is False:
         return logs
     else:
-        return {"msg": "Work-in-progress"}
+        logs.sort(key=itemgetter("timestamp"))
+        return logs
                 
 
 if __name__ == "__main__":
