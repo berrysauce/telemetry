@@ -116,7 +116,7 @@ def post_logs(auth: Authorize, formatted: bool = False):
         return {"msg": "Token is not valid for this app!"}
     logs = logdb.fetch({"app": auth.app}).items
     
-    if format is False:
+    if formatted is False:
         return logs
     else:
         logs.sort(key=itemgetter("timestamp"))
