@@ -1,6 +1,6 @@
 from requests.api import head
 import uvicorn
-from fastapi import FastAPI, Path, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional
 from deta import Deta
@@ -35,7 +35,12 @@ class LogAction(BaseModel):
 class Authorize(BaseModel):
     app: str
     token: str
-    
+
+def send_notification(notify, logapp, level, detail, timestamp):
+    if notify is True: 
+        title = "{0} [{1}]".format(logapp, level)
+        body = "{0} - Timestamp: {1}".format(detail, timestamp)
+        requests.post("https://push.techulus.com/api/v1/notify/{0}?title={1}&body={2}".format(PUSH_TOKEN, title, body))
 
 @app.get("/")
 def get_root():
@@ -45,14 +50,18 @@ def get_root():
 def post_session(item: CreateToken):
     today = str(datetime.now())
     token = str(uuid.uuid4())
-    tokendb.insert({"app": item.app,
-                    "description": item.description,
-                    "token": token,
-                    "created": today})
-    return {"msg": "Token created!",
-            "app": item.app,
-            "description": item.description,
-            "token": token}
+    tokendb.insert({
+        "app": item.app,
+        "description": item.description,
+        "token": token,
+        "created": today
+    })
+    return {
+        "msg": "Token created!",
+        "app": item.app,
+        "description": item.description,
+        "token": token
+    }
 
 @app.post("/validate")
 def post_validate(auth: Authorize):
@@ -67,7 +76,9 @@ def post_validate(auth: Authorize):
         return {"valid": True}
 
 @app.post("/log")
-def post_log(log: LogAction):
+def post_log(log: LogAction, background_tasks: BackgroundTasks):
+    background_tasks.add_task(send_notification, log.notify, log.app, log.level, log.detail, log.timestamp)
+    
     try:
         session = tokendb.fetch({"token": log.token}).items[0]
     except:
@@ -78,23 +89,18 @@ def post_log(log: LogAction):
     timestamp = datetime.strptime(log.timestamp, "%Y-%m-%d %H:%M:%S.%f")
     localtime = datetime.utcnow()
     latency = str(localtime - timestamp)
-    logdb.put({"app": log.app,
-            "level": log.level,
-            "detail": log.detail,
-            "timestamp": log.timestamp,
-            "latency": latency})
+    logdb.put({
+        "app": log.app,
+        "level": log.level,
+        "detail": log.detail,
+        "timestamp": log.timestamp,
+        "latency": latency
+    })
     
-    if log.notify is True: 
-        title = "{0} [{1}]".format(log.app, log.level)
-        body = "{0} - Timestamp: {1}".format(log.detail, log.timestamp)
-        r = requests.post("https://push.techulus.com/api/v1/notify/{0}?title={1}&body={2}".format(PUSH_TOKEN, title, body))
-        
-        return {"msg": "Action logged!",
-                "latency": latency,
-                "notification_status": r.status_code}
-    
-    return {"msg": "Action logged!",
-            "latency": latency}
+    return {
+        "msg": "Action logged!",
+        "latency": latency
+    }
          
 @app.post("/logs")
 def post_logs(auth: Authorize, format: bool = False):
