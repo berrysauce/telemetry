@@ -45,10 +45,10 @@ def get_root():
 def post_session(item: CreateToken):
     today = str(datetime.now())
     token = str(uuid.uuid4())
-    tokendb.put({"app": item.app,
-            "description": item.description,
-            "token": token,
-            "created": today})
+    tokendb.insert({"app": item.app,
+                    "description": item.description,
+                    "token": token,
+                    "created": today})
     return {"msg": "Token created!",
             "app": item.app,
             "description": item.description,
@@ -57,7 +57,7 @@ def post_session(item: CreateToken):
 @app.post("/validate")
 def post_validate(auth: Authorize):
     try:
-        session = next(tokendb.fetch({"token": auth.token}))[0]
+        session = tokendb.fetch({"token": auth.token}).items[0]
     except:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -69,7 +69,7 @@ def post_validate(auth: Authorize):
 @app.post("/log")
 def post_log(log: LogAction):
     try:
-        session = next(tokendb.fetch({"token": log.token}))[0]
+        session = tokendb.fetch({"token": log.token}).items[0]
     except:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
@@ -99,13 +99,13 @@ def post_log(log: LogAction):
 @app.post("/logs")
 def post_logs(auth: Authorize, format: bool = False):
     try:
-        session = next(tokendb.fetch({"token": auth.token}))[0]
+        session = tokendb.fetch({"token": auth.token}).items[0]
     except:
         raise HTTPException(status_code=401, detail="Unauthorized")
     
     if auth.app != session["app"]:
         return {"msg": "Token is not valid for this app!"}
-    logs = next(logdb.fetch({"app": auth.app}))
+    logs = logdb.fetch({"app": auth.app}).items
     
     if format is False:
         return logs
