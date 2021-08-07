@@ -53,8 +53,7 @@ def post_session(item: CreateToken):
             "app": item.app,
             "description": item.description,
             "token": token}
-    
-    
+
 @app.post("/validate")
 def post_validate(auth: Authorize):
     try:
@@ -77,7 +76,7 @@ def post_log(log: LogAction):
     if log.app != session["app"]:
         return {"msg": "Token is not valid for this app!"}
     timestamp = datetime.strptime(log.timestamp, "%Y-%m-%d %H:%M:%S.%f")
-    localtime = datetime.now()
+    localtime = datetime.utcnow()
     latency = str(localtime - timestamp)
     logdb.put({"app": log.app,
             "level": log.level,
@@ -96,8 +95,7 @@ def post_log(log: LogAction):
     
     return {"msg": "Action logged!",
             "latency": latency}
-        
-        
+         
 @app.post("/logs")
 def post_logs(auth: Authorize, format: bool = False):
     try:
